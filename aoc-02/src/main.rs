@@ -4,12 +4,30 @@ struct Game {
     sets: Vec<Set>,
 }
 
+impl Game {
+    fn max_set(&self) -> Set {
+        let mut max_set = Set::default();
+        for set in &self.sets {
+            max_set.red = max_set.red.max(set.red);
+            max_set.green = max_set.green.max(set.green);
+            max_set.blue = max_set.blue.max(set.blue);
+        }
+        max_set
+    }
+}
+
 #[derive(Debug)]
 #[derive(PartialEq)]
 struct Set {
     red: u8,
     green: u8,
     blue: u8,
+}
+
+impl Set {
+    fn power(&self) -> u32 {
+        self.red as u32 * self.green as u32 * self.blue as u32
+    }
 }
 
 impl From<&str> for Game {
@@ -70,21 +88,31 @@ impl PartialEq for Game {
 }
 
 fn main() {
-    let result = solve("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+    let result = solve_part1("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+    println!("{}", result);
+
+    let result = solve_part2("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
     println!("{}", result);
 }
 
-fn solve(path: &str) -> u32 {
+fn solve_part1(path: &str) -> u32 {
     let lines = parse(path);
     lines.iter()
         .map(|line| Game::from(line.as_str()))
         .filter(|game| {
-            let max_set = compute_max_set(&game.sets);
+            let max_set = game.max_set();
             max_set.red <= 12
                 && max_set.green <= 13
                 && max_set.blue <= 14
         })
         .map(|game| game.id as u32)
+        .sum()
+}
+
+fn solve_part2(path: &str) -> u32 {
+    let lines = parse(path);
+    lines.iter()
+        .map(|line| Game::from(line.as_str()).max_set().power())
         .sum()
 }
 
@@ -95,16 +123,6 @@ fn parse(path: &str) -> Vec<String> {
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
         .collect::<Vec<String>>()
-}
-
-fn compute_max_set(sets: &[Set]) -> Set {
-    let mut max_set = Set::default();
-    for set in sets {
-        max_set.red = max_set.red.max(set.red);
-        max_set.green = max_set.green.max(set.green);
-        max_set.blue = max_set.blue.max(set.blue);
-    }
-    max_set
 }
 
 #[test]
@@ -125,10 +143,15 @@ fn test() {
     let game = Game { id: 5, sets: vec![ SET1, SET2, SET3, SET4 ] };
     assert_eq!(game, Game::from(LINE));
 
-    let max_set = compute_max_set(&game.sets);
+    let max_set = game.max_set();
     const MAX_SET: Set = Set { red: 19, green: 2, blue: 1 };
     assert_eq!(MAX_SET, max_set);
 
-    let result = solve("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
-    assert_eq!(8, result)
+    let result = solve_part1("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
+    assert_eq!(8, result);
+
+    assert_eq!(24, Set { red: 2, green: 3, blue: 4 }.power());
+
+    let result = solve_part2("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
+    assert_eq!(2286, result);
 }
