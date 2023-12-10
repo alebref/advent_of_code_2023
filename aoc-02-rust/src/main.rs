@@ -57,7 +57,7 @@ impl From<&str> for Set {
 }
 
 fn main() {
-    let lines = get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+    let lines = get_input_lines("./src/input/input.txt");
 
     let result = part1::solve(lines.as_slice());
     println!("{}", result);
@@ -88,7 +88,7 @@ mod test {
             "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
         ];
 
-        assert_eq!(LINES, get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt").as_slice());
+        assert_eq!(LINES, get_input_lines("./src/input/test_input.txt").as_slice());
     }
 
     #[test]

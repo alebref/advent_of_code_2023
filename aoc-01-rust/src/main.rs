@@ -2,7 +2,7 @@ mod part1;
 mod part2;
 
 fn main() {
-    let lines = get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-01/src/input.txt");
+    let lines = get_input_lines("./src/input/input.txt");
 
     let result = part1::solve(lines.as_slice());
     println!("{}", result);
@@ -32,6 +32,6 @@ mod test {
             "treb7uchet",
         ];
 
-        assert_eq!(LINES, get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-01/src/test_input_part1.txt").as_slice());
+        assert_eq!(LINES, get_input_lines("./src/input/test_input_part1.txt").as_slice());
     }
 }
