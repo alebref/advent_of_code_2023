@@ -71,7 +71,7 @@ fn get_input_lines(path: &str) -> Vec<String> {
         .trim_end()
         .lines()
         .map(str::to_string)
-        .collect::<Vec<String>>()
+        .collect()
 }
 
 #[cfg(test)]

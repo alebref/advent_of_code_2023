@@ -19,6 +19,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Cargo.Run aoc-02.executor": "Run",
+    "node.js.selected.package.tslint": "(autodetect)",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true"
   }
 }]]></component>
