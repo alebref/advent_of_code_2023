@@ -1,33 +1,17 @@
-#[derive(Debug)]
+mod part1;
+mod part2;
+
+#[derive(Debug, PartialEq)]
 struct Game {
-    id: u8,
-    sets: Vec<Set>,
+    id: u32,
+    max_set: Set,
 }
 
-impl Game {
-    fn max_set(&self) -> Set {
-        let mut max_set = Set::default();
-        for set in &self.sets {
-            max_set.red = max_set.red.max(set.red);
-            max_set.green = max_set.green.max(set.green);
-            max_set.blue = max_set.blue.max(set.blue);
-        }
-        max_set
-    }
-}
-
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 struct Set {
-    red: u8,
-    green: u8,
-    blue: u8,
-}
-
-impl Set {
-    fn power(&self) -> u32 {
-        self.red as u32 * self.green as u32 * self.blue as u32
-    }
+    red: u32,
+    green: u32,
+    blue: u32,
 }
 
 impl From<&str> for Game {
@@ -35,25 +19,19 @@ impl From<&str> for Game {
         let game_then_sets = line.split(": ")
             .collect::<Vec<&str>>();
         let id = game_then_sets[0].strip_prefix("Game ")
-            .unwrap()
-            .parse::<u8>()
-            .unwrap();
-        let sets =  game_then_sets[1].split("; ")
-            .map(|set| Set::from(set))
-            .collect::<Vec<Set>>();
+            .expect("Bad line format, should start with 'Game '")
+            .parse::<u32>()
+            .expect("Bad game id, should be an integer");
+        let max_set =  game_then_sets[1].split("; ")
+            .map(Set::from)
+            .fold(Set::default(), |max_set, set| Set {
+                red: max_set.red.max(set.red),
+                green: max_set.green.max(set.green),
+                blue: max_set.blue.max(set.blue),
+            });
         Game {
             id,
-            sets,
-        }
-    }
-}
-
-impl Default for Set {
-    fn default() -> Self {
-        Self {
-            red: 0,
-            green: 0,
-            blue: 0,
+            max_set,
         }
     }
 }
@@ -62,96 +40,70 @@ impl From<&str> for Set {
     fn from(description: &str) -> Self {
         let mut set = Set::default();
         description.split(", ")
-            .into_iter()
             .for_each(|part| {
-                let count_then_color = part.split_ascii_whitespace()
-                    .collect::<Vec<&str>>();
-                let count = count_then_color[0].parse::<u8>().unwrap();
-                match count_then_color[1] {
+                let (count, color) = part.split_once(' ')
+                    .expect("Expected '<count> <color>'");
+                let count = count.parse::<u32>()
+                    .expect("Expected a count");
+                match color {
                     "red" => set.red = count,
                     "green" => set.green = count,
                     "blue" => set.blue = count,
-                    bad_color => panic!("bad color: '{}'", bad_color)
+                    bad_color => panic!("Bad color: '{}'", bad_color)
                 }
             });
         set
     }
 }
 
-impl PartialEq for Game {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id 
-            && self.sets.iter()
-                .enumerate()
-                .all(|(index, set)| *set == other.sets[index])
-    }
-}
-
 fn main() {
-    let result = solve_part1("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+    let lines = get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+
+    let result = part1::solve(lines.as_slice());
     println!("{}", result);
 
-    let result = solve_part2("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/input.txt");
+    let result = part2::solve(lines.as_slice());
     println!("{}", result);
 }
 
-fn solve_part1(path: &str) -> u32 {
-    let lines = parse(path);
-    lines.iter()
-        .map(|line| Game::from(line.as_str()))
-        .filter(|game| {
-            let max_set = game.max_set();
-            max_set.red <= 12
-                && max_set.green <= 13
-                && max_set.blue <= 14
-        })
-        .map(|game| game.id as u32)
-        .sum()
-}
-
-fn solve_part2(path: &str) -> u32 {
-    let lines = parse(path);
-    lines.iter()
-        .map(|line| Game::from(line.as_str()).max_set().power())
-        .sum()
-}
-
-fn parse(path: &str) -> Vec<String> {
-    std::fs::read_to_string(path)
-        .unwrap()
-        .split('\n')
-        .filter(|s| !s.is_empty())
-        .map(|s| s.to_string())
+fn get_input_lines(path: &str) -> Vec<String> {
+    std::fs::read_to_string(path).expect("The input couldn't be read")
+        .trim_end()
+        .lines()
+        .map(str::to_string)
         .collect::<Vec<String>>()
 }
 
-#[test]
-fn test() {
-    let lines = parse("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
-    assert_eq!(5, lines.len());
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    const LINE: &str = "Game 5: 19 red, 1 green; 7 red, 1 green, 1 blue; 7 red; 13 red, 2 green";
-    const SET1: Set = Set { red: 19, green: 1, blue: 0 };
-    const SET2: Set = Set { red: 7, green: 1, blue: 1 };
-    const SET3: Set = Set { red: 7, green: 0, blue: 0 };
-    const SET4: Set = Set { red: 13, green: 2, blue: 0 };
+    #[test]
+    fn test_get_input_lines() {
+        const LINES: [&str; 5] = [
+            "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
+            "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue",
+            "Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red",
+            "Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red",
+            "Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green",
+        ];
 
-    assert_eq!(SET1, Set::from("19 red, 1 green"));
-    assert_eq!(SET2, Set::from("7 red, 1 green, 1 blue"));
-    assert_eq!(SET3, Set::from("7 red"));
+        assert_eq!(LINES, get_input_lines("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt").as_slice());
+    }
 
-    let game = Game { id: 5, sets: vec![ SET1, SET2, SET3, SET4 ] };
-    assert_eq!(game, Game::from(LINE));
+    #[test]
+    fn test_game_from() {
+        const GAME: Game = Game {
+            id: 1,
+            max_set: Set { red: 4, green: 2, blue: 6 },
+        };
 
-    let max_set = game.max_set();
-    const MAX_SET: Set = Set { red: 19, green: 2, blue: 1 };
-    assert_eq!(MAX_SET, max_set);
+        assert_eq!(GAME, Game::from("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"));
+    }
 
-    let result = solve_part1("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
-    assert_eq!(8, result);
-
-    assert_eq!(24, Set { red: 2, green: 3, blue: 4 }.power());
-
-    let result = solve_part2("/media/alebref/DATA/dev/aoc-2023/aoc-02/src/test_input.txt");
-    assert_eq!(2286, result);
+    #[test]
+    fn test_set_from() {
+        assert_eq!(Set { red: 0, green: 2, blue: 0 }, Set::from("2 green"));
+        assert_eq!(Set { red: 1, green: 2, blue: 6 }, Set::from("1 red, 2 green, 6 blue"));
+    }
 }
